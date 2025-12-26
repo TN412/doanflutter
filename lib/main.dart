@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'providers/expense_provider.dart';
+import 'providers/auth_provider.dart';
 import 'services/database_service.dart';
 import 'services/notification_service.dart';
 import 'screens/main_screen.dart';
+import 'screens/login_screen.dart';
 import 'screens/add_transaction_screen.dart';
 
 void main() async {
@@ -40,6 +42,9 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(
           create: (context) => ExpenseProvider()..loadData(),
         ),
+        ChangeNotifierProvider(
+          create: (context) => AuthProvider(),
+        ),
       ],
       child: MaterialApp(
         title: 'Expense Tracker',
@@ -61,8 +66,28 @@ class MyApp extends StatelessWidget {
             elevation: 0,
           ),
         ),
-        home: const MainScreen(),
+        home: const AuthWrapper(),
       ),
+    );
+  }
+}
+
+class AuthWrapper extends StatelessWidget {
+  const AuthWrapper({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Consumer<AuthProvider>(
+      builder: (context, auth, _) {
+        if (auth.isLoading) {
+          return const Scaffold(
+            body: Center(
+              child: CircularProgressIndicator(),
+            ),
+          );
+        }
+        return auth.isLoggedIn ? const MainScreen() : const LoginScreen();
+      },
     );
   }
 }

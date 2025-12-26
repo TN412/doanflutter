@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import '../providers/expense_provider.dart';
+import '../providers/auth_provider.dart';
 import '../utils/currency_helper.dart';
 import '../services/notification_service.dart';
 import 'recurring_transactions_screen.dart';
@@ -24,6 +25,33 @@ class SettingsScreen extends StatelessWidget {
         builder: (context, provider, child) {
           return ListView(
             children: [
+              // Account Section
+              _buildSectionHeader(context, 'Tài khoản'),
+              Consumer<AuthProvider>(
+                builder: (context, auth, _) {
+                  return Column(
+                    children: [
+                      ListTile(
+                        leading: CircleAvatar(
+                          backgroundColor: Colors.blue.withOpacity(0.2),
+                          child: const Icon(Icons.person, color: Colors.blue),
+                        ),
+                        title: Text(auth.currentUser?.fullName ?? 'Người dùng'),
+                        subtitle: Text('@${auth.currentUser?.username ?? ''}'),
+                      ),
+                      ListTile(
+                        leading: CircleAvatar(
+                          backgroundColor: Colors.red.withOpacity(0.2),
+                          child: const Icon(Icons.logout, color: Colors.red),
+                        ),
+                        title: const Text('Đăng xuất', style: TextStyle(color: Colors.red)),
+                        onTap: () => _showLogoutDialog(context, auth),
+                      ),
+                    ],
+                  );
+                },
+              ),
+
               // Budget Section
               _buildSectionHeader(context, 'Ngân sách'),
               ListTile(
@@ -352,6 +380,29 @@ class SettingsScreen extends StatelessWidget {
         );
       }
     }
+  }
+
+  void _showLogoutDialog(BuildContext context, AuthProvider auth) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Đăng xuất'),
+        content: const Text('Bạn có chắc chắn muốn đăng xuất?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Hủy'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              auth.logout();
+            },
+            child: const Text('Đăng xuất', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
   }
 
   void _showResetConfirmDialog(BuildContext context, ExpenseProvider provider) {

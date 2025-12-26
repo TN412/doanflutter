@@ -3,6 +3,7 @@ import '../models/transaction_model.dart';
 import '../models/category_model.dart';
 import '../models/recurring_transaction_model.dart';
 import '../models/savings_goal_model.dart';
+import '../models/user_model.dart';
 
 class DatabaseService {
   // Tên các box
@@ -28,6 +29,7 @@ class DatabaseService {
     Hive.registerAdapter(CategoryModelAdapter());
     Hive.registerAdapter(RecurringTransactionModelAdapter());
     Hive.registerAdapter(SavingsGoalModelAdapter());
+    Hive.registerAdapter(UserModelAdapter());
 
     // Mở các box
     _transactionBox = await Hive.openBox<TransactionModel>(transactionBoxName);

@@ -6,7 +6,6 @@ import 'services/database_service.dart';
 import 'services/notification_service.dart';
 import 'screens/main_screen.dart';
 import 'screens/login_screen.dart';
-import 'screens/add_transaction_screen.dart';
 
 void main() async {
   // Đảm bảo Flutter đã khởi tạo
@@ -26,6 +25,7 @@ void main() async {
     }
   } catch (e) {
     // Ignore notification errors on first run or when permissions denied
+    // ignore: avoid_print
     print('Notification setup failed: $e');
   }
 

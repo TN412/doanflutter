@@ -1,5 +1,4 @@
 import 'package:hive/hive.dart';
-import 'category_model.dart';
 
 part 'recurring_transaction_model.g.dart';
 

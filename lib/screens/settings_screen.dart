@@ -7,9 +7,9 @@ import 'package:path_provider/path_provider.dart';
 import '../providers/expense_provider.dart';
 import '../providers/auth_provider.dart';
 import '../utils/currency_helper.dart';
-import '../services/notification_service.dart';
 import 'recurring_transactions_screen.dart';
 import 'savings_goals_screen.dart';
+import '../presentation/validators/budget_validator.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -44,7 +44,8 @@ class SettingsScreen extends StatelessWidget {
                           backgroundColor: Colors.red.withOpacity(0.2),
                           child: const Icon(Icons.logout, color: Colors.red),
                         ),
-                        title: const Text('Đăng xuất', style: TextStyle(color: Colors.red)),
+                        title: const Text('Đăng xuất',
+                            style: TextStyle(color: Colors.red)),
                         onTap: () => _showLogoutDialog(context, auth),
                       ),
                     ],
@@ -57,7 +58,8 @@ class SettingsScreen extends StatelessWidget {
               ListTile(
                 leading: CircleAvatar(
                   backgroundColor: Colors.green.withOpacity(0.2),
-                  child: const Icon(Icons.account_balance_wallet, color: Colors.green),
+                  child: const Icon(Icons.account_balance_wallet,
+                      color: Colors.green),
                 ),
                 title: const Text('Ngân sách tháng'),
                 subtitle: Text(
@@ -116,7 +118,8 @@ class SettingsScreen extends StatelessWidget {
                   child: const Icon(Icons.repeat, color: Colors.indigo),
                 ),
                 title: const Text('Giao dịch định kỳ'),
-                subtitle: Text('${provider.recurringTransactions.length} giao dịch'),
+                subtitle:
+                    Text('${provider.recurringTransactions.length} giao dịch'),
                 trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                 onTap: () {
                   Navigator.push(
@@ -182,7 +185,8 @@ class SettingsScreen extends StatelessWidget {
                 title: const Text('Tổng số giao dịch'),
                 trailing: Text(
                   '${provider.transactions.length}',
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  style: const TextStyle(
+                      fontWeight: FontWeight.bold, fontSize: 16),
                 ),
               ),
               ListTile(
@@ -190,7 +194,8 @@ class SettingsScreen extends StatelessWidget {
                 title: const Text('Tổng số danh mục'),
                 trailing: Text(
                   '${provider.categories.length}',
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  style: const TextStyle(
+                      fontWeight: FontWeight.bold, fontSize: 16),
                 ),
               ),
 
@@ -215,7 +220,8 @@ class SettingsScreen extends StatelessWidget {
   }
 
   // Time picker dialog
-  static void _showTimePickerDialog(BuildContext context, ExpenseProvider provider) async {
+  static void _showTimePickerDialog(
+      BuildContext context, ExpenseProvider provider) async {
     final time = provider.reminderTime;
     final TimeOfDay? picked = await showTimePicker(
       context: context,
@@ -243,8 +249,8 @@ class SettingsScreen extends StatelessWidget {
 
   void _showBudgetDialog(BuildContext context, ExpenseProvider provider) {
     final controller = TextEditingController(
-      text: provider.monthlyBudget > 0 
-          ? provider.monthlyBudget.toStringAsFixed(0) 
+      text: provider.monthlyBudget > 0
+          ? provider.monthlyBudget.toStringAsFixed(0)
           : '',
     );
 
@@ -268,7 +274,18 @@ class SettingsScreen extends StatelessWidget {
           ),
           FilledButton(
             onPressed: () {
-              final budget = double.tryParse(controller.text) ?? 0.0;
+              // Validate budget using BudgetValidator
+              final validation =
+                  BudgetValidator.validateBudget(controller.text);
+
+              if (!validation.isValid) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text(validation.errorMessage!)),
+                );
+                return;
+              }
+
+              final budget = validation.value!;
               provider.setMonthlyBudget(budget);
               Navigator.pop(context);
               ScaffoldMessenger.of(context).showSnackBar(
@@ -288,10 +305,11 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 
-  Future<void> _exportData(BuildContext context, ExpenseProvider provider) async {
+  Future<void> _exportData(
+      BuildContext context, ExpenseProvider provider) async {
     try {
       // Lấy dữ liệu
-      final data = provider.exportData();
+      final data = await provider.exportData();
       final jsonString = const JsonEncoder.withIndent('  ').convert(data);
 
       // Lấy thư mục Downloads
@@ -324,7 +342,8 @@ class SettingsScreen extends StatelessWidget {
     }
   }
 
-  Future<void> _importData(BuildContext context, ExpenseProvider provider) async {
+  Future<void> _importData(
+      BuildContext context, ExpenseProvider provider) async {
     try {
       // Chọn file
       final result = await FilePicker.platform.pickFiles(

@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/expense_provider.dart';
 import '../utils/currency_helper.dart';
-import '../utils/date_helper.dart';
 
 class StatsScreen extends StatefulWidget {
   const StatsScreen({super.key});
@@ -32,7 +31,7 @@ class _StatsScreenState extends State<StatsScreen> {
               children: [
                 // Filter Section
                 _buildMonthFilter(context, provider),
-                
+
                 const SizedBox(height: 24),
 
                 if (categoryExpenses.isEmpty || totalExpense == 0)
@@ -42,7 +41,8 @@ class _StatsScreenState extends State<StatsScreen> {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.pie_chart_outline, size: 64, color: Colors.grey[400]),
+                          Icon(Icons.pie_chart_outline,
+                              size: 64, color: Colors.grey[400]),
                           const SizedBox(height: 16),
                           Text(
                             'Chưa có dữ liệu chi tiêu',
@@ -59,7 +59,8 @@ class _StatsScreenState extends State<StatsScreen> {
                     child: PieChart(
                       PieChartData(
                         pieTouchData: PieTouchData(
-                          touchCallback: (FlTouchEvent event, pieTouchResponse) {
+                          touchCallback:
+                              (FlTouchEvent event, pieTouchResponse) {
                             setState(() {
                               if (!event.isInterestedForInteractions ||
                                   pieTouchResponse == null ||
@@ -75,7 +76,8 @@ class _StatsScreenState extends State<StatsScreen> {
                         borderData: FlBorderData(show: false),
                         sectionsSpace: 2,
                         centerSpaceRadius: 40,
-                        sections: _showingSections(provider, categoryExpenses, totalExpense),
+                        sections: _showingSections(
+                            provider, categoryExpenses, totalExpense),
                       ),
                     ),
                   ),
@@ -90,12 +92,14 @@ class _StatsScreenState extends State<StatsScreen> {
                       children: [
                         Text(
                           'Chi tiết theo danh mục',
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
+                          style:
+                              Theme.of(context).textTheme.titleMedium?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                  ),
                         ),
                         const SizedBox(height: 12),
-                        ..._buildDetailsList(context, provider, categoryExpenses, totalExpense),
+                        ..._buildDetailsList(
+                            context, provider, categoryExpenses, totalExpense),
                       ],
                     ),
                   ),
@@ -112,7 +116,10 @@ class _StatsScreenState extends State<StatsScreen> {
   Widget _buildMonthFilter(BuildContext context, ExpenseProvider provider) {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-      color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3),
+      color: Theme.of(context)
+          .colorScheme
+          .surfaceContainerHighest
+          .withOpacity(0.3),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -130,9 +137,10 @@ class _StatsScreenState extends State<StatsScreen> {
             children: [
               Text(
                 'Tháng ${provider.selectedMonth.month}/${provider.selectedMonth.year}',
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                style:
+                    const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
-              if (provider.selectedMonth.month == DateTime.now().month && 
+              if (provider.selectedMonth.month == DateTime.now().month &&
                   provider.selectedMonth.year == DateTime.now().year)
                 Text(
                   '(Tháng này)',
@@ -163,8 +171,9 @@ class _StatsScreenState extends State<StatsScreen> {
     Map<String, double> categoryExpenses,
     double total,
   ) {
-    final List<MapEntry<String, double>> sortedEntries = categoryExpenses.entries.toList()
-      ..sort((a, b) => b.value.compareTo(a.value));
+    final List<MapEntry<String, double>> sortedEntries =
+        categoryExpenses.entries.toList()
+          ..sort((a, b) => b.value.compareTo(a.value));
 
     return List.generate(sortedEntries.length, (i) {
       final isTouched = i == touchedIndex;
@@ -201,7 +210,7 @@ class _StatsScreenState extends State<StatsScreen> {
     return sortedEntries.map((entry) {
       final percentage = (entry.value / total * 100);
       final color = provider.getCategoryColor(entry.key);
-      
+
       return Card(
         margin: const EdgeInsets.only(bottom: 8),
         elevation: 0,
@@ -214,7 +223,11 @@ class _StatsScreenState extends State<StatsScreen> {
               color: color.withOpacity(0.2),
               shape: BoxShape.circle,
             ),
-            child: Icon(Icons.category, color: color, size: 20),
+            child: Icon(
+              provider.getCategoryIcon(entry.key),
+              color: color,
+              size: 20,
+            ),
           ),
           title: Text(
             entry.key,

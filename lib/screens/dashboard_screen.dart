@@ -4,6 +4,9 @@ import '../providers/expense_provider.dart';
 import '../utils/currency_helper.dart';
 import '../utils/date_helper.dart';
 import 'add_transaction_screen.dart';
+import '../presentation/widgets/month_year_picker.dart';
+import '../domain/enums/transaction_filter.dart';
+import '../presentation/extensions/transaction_filter_extension.dart';
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
@@ -34,21 +37,17 @@ class DashboardScreen extends StatelessWidget {
                 const SizedBox(height: 16),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Giao dịch gần đây',
+                        'Lịch sử giao dịch',
                         style: Theme.of(context).textTheme.titleLarge?.copyWith(
                               fontWeight: FontWeight.bold,
                             ),
                       ),
-                      TextButton(
-                        onPressed: () {
-                          // TODO: Navigate to full history screen
-                        },
-                        child: const Text('Xem tất cả'),
-                      ),
+                      const SizedBox(height: 12),
+                      _buildTransactionFilterChips(context, provider),
                     ],
                   ),
                 ),
@@ -64,7 +63,8 @@ class DashboardScreen extends StatelessWidget {
         onPressed: () {
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => const AddTransactionScreen()),
+            MaterialPageRoute(
+                builder: (context) => const AddTransactionScreen()),
           );
         },
         child: const Icon(Icons.add),
@@ -74,7 +74,7 @@ class DashboardScreen extends StatelessWidget {
 
   Widget _buildSummaryCard(BuildContext context, ExpenseProvider provider) {
     final colorScheme = Theme.of(context).colorScheme;
-    
+
     return Container(
       margin: const EdgeInsets.all(16),
       padding: const EdgeInsets.all(20),
@@ -181,7 +181,8 @@ class DashboardScreen extends StatelessWidget {
   }
 
   Widget _buildTransactionList(BuildContext context, ExpenseProvider provider) {
-    final transactions = provider.filteredTransactions;
+    // Dùng displayTransactions - chỉ danh sách bị ảnh hưởng bởi filter type
+    final transactions = provider.displayTransactions;
 
     if (transactions.isEmpty) {
       return Center(
@@ -216,10 +217,11 @@ class DashboardScreen extends StatelessWidget {
           margin: const EdgeInsets.only(bottom: 12),
           child: ListTile(
             leading: CircleAvatar(
-              backgroundColor: provider.getCategoryColor(transaction.categoryName).withOpacity(0.2),
+              backgroundColor: provider
+                  .getCategoryColor(transaction.categoryName)
+                  .withOpacity(0.2),
               child: Icon(
-                // Trong thực tế nên lưu iconCodePoint trong transaction hoặc lookup từ category
-                Icons.category, 
+                provider.getCategoryIcon(transaction.categoryName),
                 color: provider.getCategoryColor(transaction.categoryName),
               ),
             ),
@@ -247,7 +249,12 @@ class DashboardScreen extends StatelessWidget {
               ),
             ),
             onTap: () {
-              // TODO: Show details or edit
+              // Navigate to edit screen
+              _editTransaction(context, provider, index);
+            },
+            onLongPress: () {
+              // Show delete confirmation
+              _showDeleteDialog(context, provider, index);
             },
           ),
         );
@@ -255,20 +262,110 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 
+  // Build transaction filter chips (tuân thủ SRP - UI component riêng)
+  Widget _buildTransactionFilterChips(
+      BuildContext context, ExpenseProvider provider) {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: TransactionFilter.values.map((filter) {
+          final isSelected = provider.transactionFilter == filter;
+          return Padding(
+            padding: const EdgeInsets.only(right: 8.0),
+            child: FilterChip(
+              label: Text(filter.label),
+              selected: isSelected,
+              onSelected: (selected) {
+                if (selected) {
+                  provider.setTransactionFilter(filter);
+                }
+              },
+              backgroundColor:
+                  Theme.of(context).colorScheme.surfaceContainerHighest,
+              selectedColor: Theme.of(context).colorScheme.primaryContainer,
+              checkmarkColor: Theme.of(context).colorScheme.onPrimaryContainer,
+              labelStyle: TextStyle(
+                color: isSelected
+                    ? Theme.of(context).colorScheme.onPrimaryContainer
+                    : Theme.of(context).colorScheme.onSurface,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+              ),
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  // Show month picker dialog
   void _showMonthPicker(BuildContext context) async {
-    // Đơn giản hóa bằng cách dùng DatePicker mặc định chọn ngày, 
-    // thực tế có thể dùng package month_picker_dialog
+    // Sử dụng custom MonthYearPicker từ presentation layer
+    // Tuân thủ Single Responsibility - widget riêng lo việc chọn tháng/năm
     final provider = Provider.of<ExpenseProvider>(context, listen: false);
-    final picked = await showDatePicker(
+
+    final picked = await MonthYearPicker.show(
       context: context,
       initialDate: provider.selectedMonth,
       firstDate: DateTime(2020),
       lastDate: DateTime.now(),
-      helpText: 'CHỌN THÁNG',
     );
 
     if (picked != null) {
       provider.setSelectedMonth(picked);
     }
+  }
+
+  void _editTransaction(
+      BuildContext context, ExpenseProvider provider, int index) {
+    final transaction = provider.displayTransactions[index];
+    // Tìm index thực trong danh sách tất cả transactions
+    final actualIndex = provider.findTransactionIndex(transaction.id);
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => AddTransactionScreen(
+          transaction: transaction,
+          transactionIndex: actualIndex,
+        ),
+      ),
+    );
+  }
+
+  void _showDeleteDialog(
+      BuildContext context, ExpenseProvider provider, int index) {
+    final transaction = provider.displayTransactions[index];
+    final actualIndex = provider.findTransactionIndex(transaction.id);
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Xác nhận xóa'),
+        content: Text(
+            'Bạn có chắc muốn xóa giao dịch "${transaction.categoryName}"?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Hủy'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () async {
+              await provider.deleteTransaction(actualIndex);
+              if (context.mounted) {
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Đã xóa giao dịch')),
+                );
+              }
+            },
+            child: const Text('Xóa'),
+          ),
+        ],
+      ),
+    );
   }
 }

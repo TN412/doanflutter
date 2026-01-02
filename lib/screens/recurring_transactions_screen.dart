@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/expense_provider.dart';
 import '../models/recurring_transaction_model.dart';
-import '../models/category_model.dart';
 import '../utils/currency_helper.dart';
 import '../utils/date_helper.dart';
 
@@ -78,7 +77,8 @@ class RecurringTransactionsScreen extends StatelessWidget {
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('${item.frequencyDisplay} • ${CurrencyHelper.format(item.amount)}'),
+            Text(
+                '${item.frequencyDisplay} • ${CurrencyHelper.format(item.amount)}'),
             Text('Tiếp theo: ${DateHelper.format(item.nextDate)}'),
           ],
         ),
@@ -139,7 +139,8 @@ class RecurringTransactionsScreen extends StatelessWidget {
                   items: const [
                     DropdownMenuItem(value: 'daily', child: Text('Hàng ngày')),
                     DropdownMenuItem(value: 'weekly', child: Text('Hàng tuần')),
-                    DropdownMenuItem(value: 'monthly', child: Text('Hàng tháng')),
+                    DropdownMenuItem(
+                        value: 'monthly', child: Text('Hàng tháng')),
                     DropdownMenuItem(value: 'yearly', child: Text('Hàng năm')),
                   ],
                   onChanged: (value) => setState(() => frequency = value!),
@@ -192,7 +193,8 @@ class RecurringTransactionsScreen extends StatelessWidget {
     );
   }
 
-  void _confirmDelete(BuildContext context, ExpenseProvider provider, int index) {
+  void _confirmDelete(
+      BuildContext context, ExpenseProvider provider, int index) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(

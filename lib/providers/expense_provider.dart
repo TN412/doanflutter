@@ -5,36 +5,62 @@ import '../models/recurring_transaction_model.dart';
 import '../models/savings_goal_model.dart';
 import '../services/database_service.dart';
 import '../services/notification_service.dart';
+import '../domain/repositories/i_transaction_repository.dart';
+import '../domain/repositories/i_category_repository.dart';
+import '../domain/repositories/i_settings_repository.dart';
+import '../data/repositories/transaction_repository.dart';
+import '../data/repositories/category_repository.dart';
+import '../data/repositories/settings_repository.dart';
+import '../domain/enums/transaction_filter.dart';
 
 class ExpenseProvider extends ChangeNotifier {
+  // Repositories (Dependency Injection)
+  late final ITransactionRepository _transactionRepository;
+  late final ICategoryRepository _categoryRepository;
+  late final ISettingsRepository _settingsRepository;
+
   List<TransactionModel> _transactions = [];
   List<CategoryModel> _categories = [];
   List<RecurringTransactionModel> _recurringTransactions = [];
   List<SavingsGoalModel> _savingsGoals = [];
   DateTime _selectedMonth = DateTime.now();
   String _selectedFilter = 'month'; // 'week', 'month'
+  TransactionFilter _transactionFilter =
+      TransactionFilter.all; // Filter: all/income/expense
+
+  // Constructor with dependency injection
+  ExpenseProvider({
+    ITransactionRepository? transactionRepository,
+    ICategoryRepository? categoryRepository,
+    ISettingsRepository? settingsRepository,
+  }) {
+    // Use provided repositories or create default ones
+    _transactionRepository = transactionRepository ?? TransactionRepository();
+    _categoryRepository = categoryRepository ?? CategoryRepository();
+    _settingsRepository = settingsRepository ?? SettingsRepository();
+  }
 
   // Getters
   List<TransactionModel> get transactions => _transactions;
   List<CategoryModel> get categories => _categories;
-  List<RecurringTransactionModel> get recurringTransactions => _recurringTransactions;
+  List<RecurringTransactionModel> get recurringTransactions =>
+      _recurringTransactions;
   List<SavingsGoalModel> get savingsGoals => _savingsGoals;
   DateTime get selectedMonth => _selectedMonth;
   String get selectedFilter => _selectedFilter;
+  TransactionFilter get transactionFilter => _transactionFilter;
 
   // Khởi tạo và load dữ liệu
   Future<void> loadData() async {
-    _transactions = DatabaseService.getAllTransactions();
-    _categories = DatabaseService.getAllCategories();
-    _recurringTransactions = DatabaseService.getAllRecurringTransactions();
-    _savingsGoals = DatabaseService.getAllSavingsGoals();
-    
+    _transactions = await _transactionRepository.getAllTransactions();
+    _categories = await _categoryRepository.getAllCategories();
+
     // Kiểm tra recurring transactions cần tạo
     await _checkRecurringTransactions();
-    
+
     // Kiểm tra cảnh báo ngân sách
     await _checkBudgetAlert();
-    
+
     notifyListeners();
   }
 
@@ -76,18 +102,43 @@ class ExpenseProvider extends ChangeNotifier {
     final endOfWeek = startOfWeek.add(const Duration(days: 6));
 
     return _transactions.where((transaction) {
-      return transaction.date.isAfter(startOfWeek.subtract(const Duration(days: 1))) &&
+      return transaction.date
+              .isAfter(startOfWeek.subtract(const Duration(days: 1))) &&
           transaction.date.isBefore(endOfWeek.add(const Duration(days: 1)));
     }).toList()
       ..sort((a, b) => b.date.compareTo(a.date));
   }
 
-  // Lấy giao dịch đã lọc theo filter hiện tại
-  List<TransactionModel> get filteredTransactions {
+  // Lấy giao dịch CHỈ lọc theo THỜI GIAN (cho tính toán summary)
+  // Tuân thủ SRP - tách riêng filter theo time và type
+  List<TransactionModel> get timeFilteredTransactions {
     if (_selectedFilter == 'week') {
       return getTransactionsByWeek(_selectedMonth);
     } else {
       return getTransactionsByMonth(_selectedMonth);
+    }
+  }
+
+  // Lấy giao dịch để HIỂN THỊ (lọc theo time + type)
+  // Filter type CHỈ ảnh hưởng đến danh sách, KHÔNG ảnh hưởng summary
+  List<TransactionModel> get displayTransactions {
+    return _applyTransactionTypeFilter(timeFilteredTransactions);
+  }
+
+  // DEPRECATED: Giữ lại để backward compatibility
+  List<TransactionModel> get filteredTransactions => displayTransactions;
+
+  // Helper method: Lọc theo loại giao dịch (all/income/expense)
+  // Tuân thủ Single Responsibility - tách logic filter riêng
+  List<TransactionModel> _applyTransactionTypeFilter(
+      List<TransactionModel> transactions) {
+    switch (_transactionFilter) {
+      case TransactionFilter.all:
+        return transactions;
+      case TransactionFilter.income:
+        return transactions.where((t) => t.isIncome).toList();
+      case TransactionFilter.expense:
+        return transactions.where((t) => !t.isIncome).toList();
     }
   }
 
@@ -103,18 +154,26 @@ class ExpenseProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  // Thay đổi transaction filter (all/income/expense)
+  // Tuân thủ OCP - có thể mở rộng thêm filter mới
+  void setTransactionFilter(TransactionFilter filter) {
+    _transactionFilter = filter;
+    notifyListeners();
+  }
+
   // ==================== TÍNH TOÁN CHO DASHBOARD ====================
 
-  // Thu nhập trong khoảng thời gian được lọc
+  // Thu nhập trong khoảng thời gian (KHÔNG bị ảnh hưởng bởi TransactionFilter)
+  // Tuân thủ SRP - Summary luôn hiển thị tổng, bất kể filter nào đang chọn
   double get filteredIncome {
-    return filteredTransactions
+    return timeFilteredTransactions
         .where((t) => t.isIncome)
         .fold(0.0, (sum, t) => sum + t.amount);
   }
 
-  // Chi tiêu trong khoảng thời gian được lọc
+  // Chi tiêu trong khoảng thời gian (KHÔNG bị ảnh hưởng bởi TransactionFilter)
   double get filteredExpense {
-    return filteredTransactions
+    return timeFilteredTransactions
         .where((t) => !t.isIncome)
         .fold(0.0, (sum, t) => sum + t.amount);
   }
@@ -122,16 +181,16 @@ class ExpenseProvider extends ChangeNotifier {
   // ==================== BIỂU ĐỒ TRÒN (PIE CHART) ====================
 
   // Tính data cho pie chart - nhóm chi tiêu theo category
+  // Dùng timeFilteredTransactions vì pie chart KHÔNG bị ảnh hưởng bởi filter type
   Map<String, double> getExpensesByCategory() {
-    final expenseTransactions = filteredTransactions
-        .where((t) => !t.isIncome)
-        .toList();
+    final expenseTransactions =
+        timeFilteredTransactions.where((t) => !t.isIncome).toList();
 
     Map<String, double> categoryExpenses = {};
 
     for (var transaction in expenseTransactions) {
       if (categoryExpenses.containsKey(transaction.categoryName)) {
-        categoryExpenses[transaction.categoryName] = 
+        categoryExpenses[transaction.categoryName] =
             categoryExpenses[transaction.categoryName]! + transaction.amount;
       } else {
         categoryExpenses[transaction.categoryName] = transaction.amount;
@@ -155,6 +214,20 @@ class ExpenseProvider extends ChangeNotifier {
     return category.color;
   }
 
+  // Lấy icon của category (tuân thủ SRP - Provider lo truy xuất data)
+  IconData getCategoryIcon(String categoryName) {
+    final category = _categories.firstWhere(
+      (cat) => cat.name == categoryName,
+      orElse: () => CategoryModel(
+        name: categoryName,
+        iconCodePoint: Icons.help_outline.codePoint,
+        colorValue: Colors.grey.value,
+        isIncome: false,
+      ),
+    );
+    return category.icon;
+  }
+
   // ==================== BIỂU ĐỒ DÒNG TIỀN (CASHFLOW) ====================
 
   // Tính data cho cashflow chart theo từng ngày trong tháng
@@ -164,15 +237,17 @@ class ExpenseProvider extends ChangeNotifier {
 
     for (var transaction in monthTransactions) {
       int day = transaction.date.day;
-      
+
       if (!dailyData.containsKey(day)) {
         dailyData[day] = {'income': 0.0, 'expense': 0.0};
       }
 
       if (transaction.isIncome) {
-        dailyData[day]!['income'] = dailyData[day]!['income']! + transaction.amount;
+        dailyData[day]!['income'] =
+            dailyData[day]!['income']! + transaction.amount;
       } else {
-        dailyData[day]!['expense'] = dailyData[day]!['expense']! + transaction.amount;
+        dailyData[day]!['expense'] =
+            dailyData[day]!['expense']! + transaction.amount;
       }
     }
 
@@ -193,44 +268,45 @@ class ExpenseProvider extends ChangeNotifier {
 
   // Thêm danh mục mới
   Future<void> addCategory(CategoryModel category) async {
-    await DatabaseService.addCategory(category);
+    await _categoryRepository.addCategory(category);
     await loadData();
   }
 
   // Xóa danh mục
   Future<void> deleteCategory(int index) async {
-    await DatabaseService.deleteCategory(index);
+    await _categoryRepository.deleteCategory(index);
     await loadData();
   }
 
   // Kiểm tra danh mục có đang được sử dụng
   bool isCategoryInUse(String categoryName) {
-    return DatabaseService.isCategoryInUse(categoryName);
+    return _categoryRepository.isCategoryInUse(categoryName);
   }
 
   // ==================== CRUD GIAO DỊCH ====================
 
   // Thêm giao dịch mới
   Future<void> addTransaction(TransactionModel transaction) async {
-    await DatabaseService.addTransaction(transaction);
+    await _transactionRepository.addTransaction(transaction);
     await loadData();
   }
 
   // Cập nhật giao dịch
-  Future<void> updateTransaction(int index, TransactionModel transaction) async {
-    await DatabaseService.updateTransaction(index, transaction);
+  Future<void> updateTransaction(
+      int index, TransactionModel transaction) async {
+    await _transactionRepository.updateTransaction(index, transaction);
     await loadData();
   }
 
   // Xóa giao dịch
   Future<void> deleteTransaction(int index) async {
-    await DatabaseService.deleteTransaction(index);
+    await _transactionRepository.deleteTransaction(index);
     await loadData();
   }
 
   // Tìm index của giao dịch theo ID
   int findTransactionIndex(String id) {
-    return _transactions.indexWhere((t) => t.id == id);
+    return _transactionRepository.findTransactionIndexById(id);
   }
 
   // ==================== TÌM KIẾM ====================
@@ -252,12 +328,12 @@ class ExpenseProvider extends ChangeNotifier {
 
   // Lấy ngân sách tháng
   double get monthlyBudget {
-    return DatabaseService.getMonthlyBudget();
+    return _settingsRepository.getMonthlyBudget();
   }
 
   // Đặt ngân sách tháng
   Future<void> setMonthlyBudget(double budget) async {
-    await DatabaseService.setMonthlyBudget(budget);
+    await _settingsRepository.setMonthlyBudget(budget);
     notifyListeners();
   }
 
@@ -281,7 +357,7 @@ class ExpenseProvider extends ChangeNotifier {
 
     for (var transaction in filteredTransactions) {
       final dateKey = _formatDateKey(transaction.date);
-      
+
       if (!grouped.containsKey(dateKey)) {
         grouped[dateKey] = [];
       }
@@ -310,19 +386,19 @@ class ExpenseProvider extends ChangeNotifier {
   // ==================== BACKUP & RESTORE ====================
 
   // Export dữ liệu
-  Map<String, dynamic> exportData() {
-    return DatabaseService.exportToJson();
+  Future<Map<String, dynamic>> exportData() async {
+    return await _settingsRepository.exportToJson();
   }
 
   // Import dữ liệu
   Future<void> importData(Map<String, dynamic> data) async {
-    await DatabaseService.importFromJson(data);
+    await _settingsRepository.importFromJson(data);
     await loadData();
   }
 
   // Reset toàn bộ dữ liệu
   Future<void> resetAllData() async {
-    await DatabaseService.resetDatabase();
+    await _settingsRepository.resetDatabase();
     await loadData();
   }
 
@@ -373,9 +449,10 @@ class ExpenseProvider extends ChangeNotifier {
   }
 
   // Thêm recurring transaction
-  Future<void> addRecurringTransaction(RecurringTransactionModel recurring) async {
+  Future<void> addRecurringTransaction(
+      RecurringTransactionModel recurring) async {
     await DatabaseService.addRecurringTransaction(recurring);
-    
+
     // Đặt nhắc nhở
     final index = _recurringTransactions.length;
     await NotificationService.scheduleRecurringReminder(
@@ -383,7 +460,7 @@ class ExpenseProvider extends ChangeNotifier {
       recurring.description,
       recurring.nextDate,
     );
-    
+
     await loadData();
   }
 
@@ -393,7 +470,7 @@ class ExpenseProvider extends ChangeNotifier {
     RecurringTransactionModel recurring,
   ) async {
     await DatabaseService.updateRecurringTransaction(index, recurring);
-    
+
     if (recurring.isActive) {
       await NotificationService.scheduleRecurringReminder(
         index,
@@ -403,7 +480,7 @@ class ExpenseProvider extends ChangeNotifier {
     } else {
       await NotificationService.cancelRecurringReminder(index);
     }
-    
+
     await loadData();
   }
 
@@ -465,7 +542,8 @@ class ExpenseProvider extends ChangeNotifier {
   }
 
   // Đặt nhắc nhở hàng ngày
-  Future<void> setDailyReminder(bool enabled, {int hour = 20, int minute = 0}) async {
+  Future<void> setDailyReminder(bool enabled,
+      {int hour = 20, int minute = 0}) async {
     await DatabaseService.setDailyReminderEnabled(enabled);
     if (enabled) {
       await DatabaseService.setReminderTime(hour, minute);

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'providers/expense_provider.dart';
 import 'providers/auth_provider.dart';
 import 'services/database_service.dart';
@@ -52,18 +53,24 @@ class MyApp extends StatelessWidget {
         theme: ThemeData(
           useMaterial3: true,
           colorScheme: ColorScheme.fromSeed(
-            seedColor: Colors.deepPurple,
+            seedColor: const Color(0xFF2E86DE), // Xanh dương vui tươi
             brightness: Brightness.light,
           ),
+          textTheme: GoogleFonts.poppinsTextTheme(),
           cardTheme: CardThemeData(
             elevation: 2,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(16), // Bo tròn hơn
             ),
           ),
-          appBarTheme: const AppBarTheme(
+          appBarTheme: AppBarTheme(
             centerTitle: true,
             elevation: 0,
+            titleTextStyle: GoogleFonts.poppins(
+              fontSize: 20,
+              fontWeight: FontWeight.w600,
+              color: Colors.black87,
+            ),
           ),
         ),
         home: const AuthWrapper(),

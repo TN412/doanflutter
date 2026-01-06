@@ -92,6 +92,10 @@ class RecurringTransactionsScreen extends StatelessWidget {
               },
             ),
             IconButton(
+              icon: const Icon(Icons.edit, color: Colors.blue),
+              onPressed: () => _showEditDialog(context, provider, index, item),
+            ),
+            IconButton(
               icon: const Icon(Icons.delete, color: Colors.red),
               onPressed: () => _confirmDelete(context, provider, index),
             ),
@@ -213,6 +217,101 @@ class RecurringTransactionsScreen extends StatelessWidget {
             child: const Text('Xóa'),
           ),
         ],
+      ),
+    );
+  }
+
+  void _showEditDialog(
+    BuildContext context,
+    ExpenseProvider provider,
+    int index,
+    RecurringTransactionModel item,
+  ) {
+    final descController = TextEditingController(text: item.description);
+    final amountController = TextEditingController(text: item.amount.toString());
+    bool isIncome = item.isIncome;
+    String frequency = item.frequency;
+    DateTime nextDate = item.nextDate;
+    int selectedCategory = item.categoryIndex;
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          title: const Text('Sửa giao dịch định kỳ'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: descController,
+                  decoration: const InputDecoration(labelText: 'Mô tả'),
+                ),
+                TextField(
+                  controller: amountController,
+                  decoration: const InputDecoration(labelText: 'Số tiền'),
+                  keyboardType: TextInputType.number,
+                ),
+                SwitchListTile(
+                  title: const Text('Thu nhập'),
+                  value: isIncome,
+                  onChanged: (value) => setState(() => isIncome = value),
+                ),
+                DropdownButtonFormField<String>(
+                  value: frequency,
+                  decoration: const InputDecoration(labelText: 'Tần suất'),
+                  items: const [
+                    DropdownMenuItem(value: 'daily', child: Text('Hàng ngày')),
+                    DropdownMenuItem(value: 'weekly', child: Text('Hàng tuần')),
+                    DropdownMenuItem(
+                        value: 'monthly', child: Text('Hàng tháng')),
+                    DropdownMenuItem(value: 'yearly', child: Text('Hàng năm')),
+                  ],
+                  onChanged: (value) => setState(() => frequency = value!),
+                ),
+                ListTile(
+                  title: const Text('Ngày tiếp theo'),
+                  subtitle: Text(DateHelper.format(nextDate)),
+                  onTap: () async {
+                    final picked = await showDatePicker(
+                      context: context,
+                      initialDate: nextDate,
+                      firstDate: DateTime.now(),
+                      lastDate: DateTime.now().add(const Duration(days: 365)),
+                    );
+                    if (picked != null) {
+                      setState(() => nextDate = picked);
+                    }
+                  },
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Hủy'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                if (descController.text.isNotEmpty &&
+                    amountController.text.isNotEmpty) {
+                  final updatedRecurring = item.copyWith(
+                    description: descController.text,
+                    amount: double.parse(amountController.text),
+                    categoryIndex: selectedCategory,
+                    isIncome: isIncome,
+                    frequency: frequency,
+                    nextDate: nextDate,
+                  );
+                  provider.updateRecurringTransaction(index, updatedRecurring);
+                  Navigator.pop(context);
+                }
+              },
+              child: const Text('Lưu'),
+            ),
+          ],
+        ),
       ),
     );
   }

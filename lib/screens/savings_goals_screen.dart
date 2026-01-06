@@ -137,6 +137,10 @@ class SavingsGoalsScreen extends StatelessWidget {
                 ),
                 const SizedBox(width: 8),
                 IconButton(
+                  icon: const Icon(Icons.edit, color: Colors.blue),
+                  onPressed: () => _showEditGoalDialog(context, provider, index, goal),
+                ),
+                IconButton(
                   icon: const Icon(Icons.delete, color: Colors.red),
                   onPressed: () => _confirmDelete(context, provider, index),
                 ),
@@ -282,6 +286,82 @@ class SavingsGoalsScreen extends StatelessWidget {
             child: const Text('Xóa'),
           ),
         ],
+      ),
+    );
+  }
+
+  void _showEditGoalDialog(
+    BuildContext context,
+    ExpenseProvider provider,
+    int index,
+    SavingsGoalModel goal,
+  ) {
+    final nameController = TextEditingController(text: goal.name);
+    final targetController = TextEditingController(text: goal.targetAmount.toString());
+    DateTime? deadline = goal.deadline;
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          title: const Text('Sửa mục tiêu'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: nameController,
+                  decoration: const InputDecoration(labelText: 'Tên mục tiêu'),
+                ),
+                TextField(
+                  controller: targetController,
+                  decoration: const InputDecoration(labelText: 'Số tiền mục tiêu'),
+                  keyboardType: TextInputType.number,
+                ),
+                ListTile(
+                  title: const Text('Hạn chót (tùy chọn)'),
+                  subtitle: Text(
+                    deadline != null
+                        ? '${deadline!.day}/${deadline!.month}/${deadline!.year}'
+                        : 'Chưa đặt',
+                  ),
+                  onTap: () async {
+                    final picked = await showDatePicker(
+                      context: context,
+                      initialDate: deadline ?? DateTime.now().add(const Duration(days: 30)),
+                      firstDate: DateTime.now(),
+                      lastDate: DateTime.now().add(const Duration(days: 3650)),
+                    );
+                    if (picked != null) {
+                      setState(() => deadline = picked);
+                    }
+                  },
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Hủy'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                if (nameController.text.isNotEmpty &&
+                    targetController.text.isNotEmpty) {
+                  final updatedGoal = goal.copyWith(
+                    name: nameController.text,
+                    targetAmount: double.parse(targetController.text),
+                    deadline: deadline,
+                  );
+                  provider.updateSavingsGoal(index, updatedGoal);
+                  Navigator.pop(context);
+                }
+              },
+              child: const Text('Lưu'),
+            ),
+          ],
+        ),
       ),
     );
   }

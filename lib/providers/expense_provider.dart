@@ -54,6 +54,8 @@ class ExpenseProvider extends ChangeNotifier {
   Future<void> loadData() async {
     _transactions = await _transactionRepository.getAllTransactions();
     _categories = await _categoryRepository.getAllCategories();
+    _recurringTransactions = DatabaseService.getAllRecurringTransactions();
+    _savingsGoals = DatabaseService.getAllSavingsGoals();
 
     // Kiểm tra recurring transactions cần tạo
     await _checkRecurringTransactions();

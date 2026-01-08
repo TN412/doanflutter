@@ -1,4 +1,4 @@
-import '../../models/transaction_model.dart';
+import '../entities/transaction_model.dart';
 
 /// Transaction Repository Interface
 /// Tuân thủ Dependency Inversion Principle - High-level module không phụ thuộc vào low-level

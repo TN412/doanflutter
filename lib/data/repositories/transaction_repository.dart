@@ -1,6 +1,6 @@
 import '../../domain/repositories/i_transaction_repository.dart';
-import '../../models/transaction_model.dart';
-import '../../services/database_service.dart';
+import '../../domain/entities/transaction_model.dart';
+import '../../infrastructure/database_service.dart';
 
 /// Transaction Repository Implementation
 /// Tuân thủ Dependency Inversion - Implement interface từ domain layer

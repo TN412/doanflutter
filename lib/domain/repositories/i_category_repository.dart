@@ -1,4 +1,4 @@
-import '../../models/category_model.dart';
+import '../entities/category_model.dart';
 
 /// Category Repository Interface
 /// Tuân thủ Dependency Inversion Principle

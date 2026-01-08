@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
-import '../models/category_model.dart';
-import '../models/transaction_model.dart';
-import '../providers/expense_provider.dart';
-import '../utils/date_helper.dart';
-import '../presentation/validators/transaction_validator.dart';
+import '../../domain/entities/category_model.dart';
+import '../../domain/entities/transaction_model.dart';
+import '../../providers/expense_provider.dart';
+import '../../utils/date_helper.dart';
+import '../validators/transaction_validator.dart';
 import 'add_category_screen.dart';
 
 class AddTransactionScreen extends StatefulWidget {
@@ -430,40 +430,46 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                         onTap: () =>
                             setState(() => _selectedCategory = category),
                         onLongPress: () {
-                           showDialog(
-                             context: context,
-                             builder: (ctx) => AlertDialog(
-                               title: const Text('Xóa danh mục?'),
-                               content: Text('Bạn có chắc muốn xóa "${category.name}"?'),
-                               actions: [
-                                 TextButton(
-                                   onPressed: () => Navigator.pop(ctx),
-                                   child: const Text('Hủy'),
-                                 ),
-                                 TextButton(
-                                   onPressed: () async {
-                                      final provider = Provider.of<ExpenseProvider>(context, listen: false);
-                                      // Chú ý: Category trong danh sách hiện tại là reference từ provider, 
-                                      // nên indexOf sẽ hoạt động đúng nếu object reference giống nhau.
-                                      // Nếu là Grid item, có thể provider.categories.indexOf dựa trên identity.
-                                      // Nếu ko tìm thấy, có thể do Hive tạo object mới khi read.
-                                      // Tuy nhiên, loadData() refresh list.
-                                      // Cách an toàn hơn là tìm theo tên nếu name unique
-                                      int index = provider.categories.indexOf(category);
-                                      if (index == -1) {
-                                         index = provider.categories.indexWhere((c) => c.name == category.name);
-                                      }
-                                      
-                                      if (index != -1) {
-                                         await provider.deleteCategory(index);
-                                         if (context.mounted) Navigator.pop(ctx);
-                                      }
-                                   },
-                                   child: const Text('Xóa', style: TextStyle(color: Colors.red)),
-                                 ),
-                               ],
-                             ),
-                           );
+                          showDialog(
+                            context: context,
+                            builder: (ctx) => AlertDialog(
+                              title: const Text('Xóa danh mục?'),
+                              content: Text(
+                                  'Bạn có chắc muốn xóa "${category.name}"?'),
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Navigator.pop(ctx),
+                                  child: const Text('Hủy'),
+                                ),
+                                TextButton(
+                                  onPressed: () async {
+                                    final provider =
+                                        Provider.of<ExpenseProvider>(context,
+                                            listen: false);
+                                    // Chú ý: Category trong danh sách hiện tại là reference từ provider,
+                                    // nên indexOf sẽ hoạt động đúng nếu object reference giống nhau.
+                                    // Nếu là Grid item, có thể provider.categories.indexOf dựa trên identity.
+                                    // Nếu ko tìm thấy, có thể do Hive tạo object mới khi read.
+                                    // Tuy nhiên, loadData() refresh list.
+                                    // Cách an toàn hơn là tìm theo tên nếu name unique
+                                    int index =
+                                        provider.categories.indexOf(category);
+                                    if (index == -1) {
+                                      index = provider.categories.indexWhere(
+                                          (c) => c.name == category.name);
+                                    }
+
+                                    if (index != -1) {
+                                      await provider.deleteCategory(index);
+                                      if (context.mounted) Navigator.pop(ctx);
+                                    }
+                                  },
+                                  child: const Text('Xóa',
+                                      style: TextStyle(color: Colors.red)),
+                                ),
+                              ],
+                            ),
+                          );
                         },
                         child: AnimatedScale(
                           scale: isSelected

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../providers/expense_provider.dart';
-import '../models/recurring_transaction_model.dart';
-import '../utils/currency_helper.dart';
-import '../utils/date_helper.dart';
+import '../../providers/expense_provider.dart';
+import '../../domain/entities/recurring_transaction_model.dart';
+import '../../utils/currency_helper.dart';
+import '../../utils/date_helper.dart';
 
 class RecurringTransactionsScreen extends StatelessWidget {
   const RecurringTransactionsScreen({super.key});
@@ -228,7 +228,8 @@ class RecurringTransactionsScreen extends StatelessWidget {
     RecurringTransactionModel item,
   ) {
     final descController = TextEditingController(text: item.description);
-    final amountController = TextEditingController(text: item.amount.toString());
+    final amountController =
+        TextEditingController(text: item.amount.toString());
     bool isIncome = item.isIncome;
     String frequency = item.frequency;
     DateTime nextDate = item.nextDate;

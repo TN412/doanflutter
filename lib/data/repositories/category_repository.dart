@@ -1,6 +1,6 @@
 import '../../domain/repositories/i_category_repository.dart';
-import '../../models/category_model.dart';
-import '../../services/database_service.dart';
+import '../../domain/entities/category_model.dart';
+import '../../infrastructure/database_service.dart';
 
 /// Category Repository Implementation
 /// Tuân thủ Dependency Inversion

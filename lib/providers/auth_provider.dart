@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
-import '../models/user_model.dart';
+import '../domain/entities/user_model.dart';
 
 class AuthProvider with ChangeNotifier {
   static const String userBoxName = 'users';
@@ -85,3 +85,4 @@ class AuthProvider with ChangeNotifier {
     notifyListeners();
   }
 }
+

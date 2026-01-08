@@ -4,12 +4,12 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:path_provider/path_provider.dart';
-import '../providers/expense_provider.dart';
-import '../providers/auth_provider.dart';
-import '../utils/currency_helper.dart';
+import '../../providers/expense_provider.dart';
+import '../../providers/auth_provider.dart';
+import '../../utils/currency_helper.dart';
 import 'recurring_transactions_screen.dart';
 import 'savings_goals_screen.dart';
-import '../presentation/validators/budget_validator.dart';
+import '../validators/budget_validator.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});

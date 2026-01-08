@@ -3,10 +3,10 @@ import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'providers/expense_provider.dart';
 import 'providers/auth_provider.dart';
-import 'services/database_service.dart';
-import 'services/notification_service.dart';
-import 'screens/main_screen.dart';
-import 'screens/login_screen.dart';
+import 'infrastructure/database_service.dart';
+import 'infrastructure/notification_service.dart';
+import 'presentation/screens/main_screen.dart';
+import 'presentation/screens/login_screen.dart';
 
 void main() async {
   // Đảm bảo Flutter đã khởi tạo

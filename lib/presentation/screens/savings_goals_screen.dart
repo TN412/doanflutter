@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../providers/expense_provider.dart';
-import '../models/savings_goal_model.dart';
-import '../utils/currency_helper.dart';
+import '../../providers/expense_provider.dart';
+import '../../domain/entities/savings_goal_model.dart';
+import '../../utils/currency_helper.dart';
 
 class SavingsGoalsScreen extends StatelessWidget {
   const SavingsGoalsScreen({super.key});
@@ -130,7 +130,8 @@ class SavingsGoalsScreen extends StatelessWidget {
               children: [
                 Expanded(
                   child: ElevatedButton.icon(
-                    onPressed: () => _showAddMoneyDialog(context, provider, index, goal),
+                    onPressed: () =>
+                        _showAddMoneyDialog(context, provider, index, goal),
                     icon: const Icon(Icons.add),
                     label: const Text('Thêm tiền'),
                   ),
@@ -138,7 +139,8 @@ class SavingsGoalsScreen extends StatelessWidget {
                 const SizedBox(width: 8),
                 IconButton(
                   icon: const Icon(Icons.edit, color: Colors.blue),
-                  onPressed: () => _showEditGoalDialog(context, provider, index, goal),
+                  onPressed: () =>
+                      _showEditGoalDialog(context, provider, index, goal),
                 ),
                 IconButton(
                   icon: const Icon(Icons.delete, color: Colors.red),
@@ -173,7 +175,8 @@ class SavingsGoalsScreen extends StatelessWidget {
                 ),
                 TextField(
                   controller: targetController,
-                  decoration: const InputDecoration(labelText: 'Số tiền mục tiêu'),
+                  decoration:
+                      const InputDecoration(labelText: 'Số tiền mục tiêu'),
                   keyboardType: TextInputType.number,
                 ),
                 ListTile(
@@ -267,7 +270,8 @@ class SavingsGoalsScreen extends StatelessWidget {
     );
   }
 
-  void _confirmDelete(BuildContext context, ExpenseProvider provider, int index) {
+  void _confirmDelete(
+      BuildContext context, ExpenseProvider provider, int index) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -297,7 +301,8 @@ class SavingsGoalsScreen extends StatelessWidget {
     SavingsGoalModel goal,
   ) {
     final nameController = TextEditingController(text: goal.name);
-    final targetController = TextEditingController(text: goal.targetAmount.toString());
+    final targetController =
+        TextEditingController(text: goal.targetAmount.toString());
     DateTime? deadline = goal.deadline;
 
     showDialog(
@@ -315,7 +320,8 @@ class SavingsGoalsScreen extends StatelessWidget {
                 ),
                 TextField(
                   controller: targetController,
-                  decoration: const InputDecoration(labelText: 'Số tiền mục tiêu'),
+                  decoration:
+                      const InputDecoration(labelText: 'Số tiền mục tiêu'),
                   keyboardType: TextInputType.number,
                 ),
                 ListTile(
@@ -328,7 +334,8 @@ class SavingsGoalsScreen extends StatelessWidget {
                   onTap: () async {
                     final picked = await showDatePicker(
                       context: context,
-                      initialDate: deadline ?? DateTime.now().add(const Duration(days: 30)),
+                      initialDate: deadline ??
+                          DateTime.now().add(const Duration(days: 30)),
                       firstDate: DateTime.now(),
                       lastDate: DateTime.now().add(const Duration(days: 3650)),
                     );

@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:lottie/lottie.dart'; // Uncomment khi có file Lottie
-import '../providers/expense_provider.dart';
-import '../utils/currency_helper.dart';
-import '../utils/date_helper.dart';
+import '../../providers/expense_provider.dart';
+import '../../utils/currency_helper.dart';
 import 'add_transaction_screen.dart';
-import '../presentation/widgets/month_year_picker.dart';
-import '../domain/enums/transaction_filter.dart';
-import '../presentation/extensions/transaction_filter_extension.dart';
+import '../widgets/month_year_picker.dart';
+import '../../domain/enums/transaction_filter.dart';
+import '../extensions/transaction_filter_extension.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -405,9 +404,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     if (results.isEmpty) {
       if (_searchController.text.isEmpty) {
-         return const Center(
+        return const Center(
           child: Text('Nhập từ khóa để tìm kiếm...'),
-         );
+        );
       }
       return const Center(
         child: Text('Không tìm thấy giao dịch nào phù hợp.'),
@@ -442,8 +441,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
         // Tính tổng tiền trong ngày
         double dayTotal = 0;
         for (var t in transactions) {
-           if (t.isIncome) dayTotal += t.amount;
-           else dayTotal -= t.amount;
+          if (t.isIncome)
+            dayTotal += t.amount;
+          else
+            dayTotal -= t.amount;
         }
 
         return Column(
@@ -451,7 +452,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
           children: [
             // Header ngày
             Padding(
-              padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 4),
+              padding:
+                  const EdgeInsets.symmetric(vertical: 12.0, horizontal: 4),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -464,11 +466,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ),
                   ),
                   Text(
-                    dayTotal > 0 ? '+${CurrencyHelper.format(dayTotal)}' : CurrencyHelper.format(dayTotal),
+                    dayTotal > 0
+                        ? '+${CurrencyHelper.format(dayTotal)}'
+                        : CurrencyHelper.format(dayTotal),
                     style: TextStyle(
-                       color: dayTotal >= 0 ? Colors.green : Colors.red,
-                       fontWeight: FontWeight.bold,
-                       fontSize: 13,
+                      color: dayTotal >= 0 ? Colors.green : Colors.red,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
                     ),
                   )
                 ],
@@ -546,7 +550,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
           _editTransaction(context, provider, actualIndex);
         },
         onLongPress: () {
-          _showDeleteDialog(context, provider, actualIndex, transaction.categoryName);
+          _showDeleteDialog(
+              context, provider, actualIndex, transaction.categoryName);
         },
       ),
     );
@@ -608,7 +613,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     if (picked != null) {
       provider.setSelectedMonth(picked);
     }
-    // Also reset filter to month if user selects a month? Or keep it as is. 
+    // Also reset filter to month if user selects a month? Or keep it as is.
     // Usually selecting a month implies Month View.
     provider.setFilter('month');
   }
@@ -616,29 +621,27 @@ class _DashboardScreenState extends State<DashboardScreen> {
   void _editTransaction(
       BuildContext context, ExpenseProvider provider, int index) {
     if (index >= 0) {
-        final transactionModel = provider.transactions[index];
+      final transactionModel = provider.transactions[index];
 
-        Navigator.push(
+      Navigator.push(
         context,
         MaterialPageRoute(
-            builder: (context) => AddTransactionScreen(
+          builder: (context) => AddTransactionScreen(
             transaction: transactionModel,
             transactionIndex: index,
-            ),
+          ),
         ),
-        );
+      );
     }
   }
 
-  void _showDeleteDialog(
-      BuildContext context, ExpenseProvider provider, int index, String categoryName) {
-    
+  void _showDeleteDialog(BuildContext context, ExpenseProvider provider,
+      int index, String categoryName) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Xác nhận xóa'),
-        content: Text(
-            'Bạn có chắc muốn xóa giao dịch "$categoryName"?'),
+        content: Text('Bạn có chắc muốn xóa giao dịch "$categoryName"?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),

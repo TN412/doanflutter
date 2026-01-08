@@ -1,9 +1,9 @@
 import 'package:hive_flutter/hive_flutter.dart';
-import '../models/transaction_model.dart';
-import '../models/category_model.dart';
-import '../models/recurring_transaction_model.dart';
-import '../models/savings_goal_model.dart';
-import '../models/user_model.dart';
+import '../domain/entities/transaction_model.dart';
+import '../domain/entities/category_model.dart';
+import '../domain/entities/recurring_transaction_model.dart';
+import '../domain/entities/savings_goal_model.dart';
+import '../domain/entities/user_model.dart';
 
 class DatabaseService {
   // Tên các box
@@ -35,8 +35,10 @@ class DatabaseService {
     _transactionBox = await Hive.openBox<TransactionModel>(transactionBoxName);
     _categoryBox = await Hive.openBox<CategoryModel>(categoryBoxName);
     _settingsBox = await Hive.openBox(settingsBoxName);
-    _recurringBox = await Hive.openBox<RecurringTransactionModel>(recurringBoxName);
-    _savingsGoalsBox = await Hive.openBox<SavingsGoalModel>(savingsGoalsBoxName);
+    _recurringBox =
+        await Hive.openBox<RecurringTransactionModel>(recurringBoxName);
+    _savingsGoalsBox =
+        await Hive.openBox<SavingsGoalModel>(savingsGoalsBoxName);
 
     // Khởi tạo danh mục mặc định nếu chưa có
     await _initDefaultCategories();
@@ -74,7 +76,8 @@ class DatabaseService {
   }
 
   // Cập nhật giao dịch
-  static Future<void> updateTransaction(int index, TransactionModel transaction) async {
+  static Future<void> updateTransaction(
+      int index, TransactionModel transaction) async {
     await _transactionBox!.putAt(index, transaction);
   }
 
@@ -200,7 +203,8 @@ class DatabaseService {
   // ==================== RECURRING TRANSACTIONS ====================
 
   // Thêm giao dịch định kỳ
-  static Future<void> addRecurringTransaction(RecurringTransactionModel recurring) async {
+  static Future<void> addRecurringTransaction(
+      RecurringTransactionModel recurring) async {
     await _recurringBox!.add(recurring);
   }
 
@@ -215,7 +219,8 @@ class DatabaseService {
   }
 
   // Cập nhật giao dịch định kỳ
-  static Future<void> updateRecurringTransaction(int index, RecurringTransactionModel recurring) async {
+  static Future<void> updateRecurringTransaction(
+      int index, RecurringTransactionModel recurring) async {
     await _recurringBox!.putAt(index, recurring);
   }
 
@@ -242,7 +247,8 @@ class DatabaseService {
   }
 
   // Cập nhật mục tiêu tiết kiệm
-  static Future<void> updateSavingsGoal(int index, SavingsGoalModel goal) async {
+  static Future<void> updateSavingsGoal(
+      int index, SavingsGoalModel goal) async {
     await _savingsGoalsBox!.putAt(index, goal);
   }
 

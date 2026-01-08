@@ -1,4 +1,4 @@
-import '../../models/transaction_model.dart';
+import '../entities/transaction_model.dart';
 import '../repositories/i_transaction_repository.dart';
 
 /// UseCase để thêm transaction mới

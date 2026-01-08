@@ -1,5 +1,5 @@
 import '../../domain/repositories/i_settings_repository.dart';
-import '../../services/database_service.dart';
+import '../../infrastructure/database_service.dart';
 
 /// Settings Repository Implementation
 /// Tuân thủ Dependency Inversion

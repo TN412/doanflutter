@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import '../models/transaction_model.dart';
-import '../models/category_model.dart';
-import '../models/recurring_transaction_model.dart';
-import '../models/savings_goal_model.dart';
-import '../services/database_service.dart';
-import '../services/notification_service.dart';
+import '../domain/entities/transaction_model.dart';
+import '../domain/entities/category_model.dart';
+import '../domain/entities/recurring_transaction_model.dart';
+import '../domain/entities/savings_goal_model.dart';
+import '../infrastructure/database_service.dart';
+import '../infrastructure/notification_service.dart';
 import '../domain/repositories/i_transaction_repository.dart';
 import '../domain/repositories/i_category_repository.dart';
 import '../domain/repositories/i_settings_repository.dart';
